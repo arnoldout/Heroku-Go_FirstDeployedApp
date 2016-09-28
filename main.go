@@ -9,10 +9,10 @@ import (
 	"github.com/russross/blackfriday"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"Heroku-Go_FirstDeployedApp\models"
 )
-UserController struct {  
-    session *mgo.Session
+type Person struct{
+	Name	string
+	age		int	
 }
 func main() {
 	port := os.Getenv("PORT")
@@ -25,22 +25,36 @@ func main() {
 	router.Use(gin.Logger())
 	router.LoadHTMLGlob("templates/*.tmpl.html")
 	router.Static("/static", "static")
-	
-	uc := controllers.NewUserController(getSession())
-
+		
 	router.GET("/mark", func(c *gin.Context) {
-		u := models.User{
-	          Name:   "Bob Smith",
-	          Gender: "male",
-	          Age:    50,
-	          Id:     p.ByName("id"),
+		sess := getSession()
+		
+		defer sess.Close()
+		sess.setSafe(&mgo.Safe{})
+		err = collection.Insert(&Person{"Stefan Klaste", 2},
+	                        &Person{"Nishant Modak", 5},
+	                        &Person{"Prathamesh Sonpatki", 5},
+	                        &Person{"murtuza kutub", 5},
+	                        &Person{"aniket joshi", 6},
+	                        &Person{"Michael de Silva", 8},
+	                        &Person{"Alejandro Cespedes Vicente", 5})
+        if err != nil {
+                log.Fatal("Problem inserting data: ", err)
+                return
         }
-		c.String(http.StatusOK, string(blackfriday.MarkdownBasic([]byte("**hi!**"))))
+		result := Person{}
+        err = collection.Find(bson.M{"name": "Prathamesh Sonpatki"}).One(&result)
+        if err != nil {
+                log.Fatal("Error finding record: ", err)
+                return
+        }
+		c.String(http.StatusOK, string(blackfriday.MarkdownBasic([]byte("fsdf",result.Name))))
+		 
 	})
 
 	router.Run(":" + port)
 }
-func getSession() *mgo.Session {
+func getSession(){
 	// Connect to our local mongo
 	s, err := mgo.Dial(" mongodb://<heroku_1pkmmgpc>:<mongopassword1>@ds041556.mlab.com:41556/heroku_1pkmmgpc")
 
